@@ -2,261 +2,192 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>CheckForge Chess</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
 <style>
-* {
-    box-sizing: border-box;
+*{box-sizing:border-box}
+
+html,body{
+    margin:0;
+    padding:0;
+    min-height:100%;
 }
 
-html, body {
-    margin: 0;
-    padding: 0;
-    min-height: 100%;
+body{
+    background:#262421;
+    color:white;
+    font-family:Arial,sans-serif;
+    display:flex;
+    justify-content:center;
 }
 
-body {
-    background: #262421;
-    color: white;
-    font-family: Arial, Helvetica, sans-serif;
-    display: flex;
-    justify-content: center;
+#app{
+    width:min(96vw,760px);
+    padding:14px;
+    text-align:center;
 }
 
-#app {
-    width: min(96vw, 760px);
-    padding: 14px;
-    text-align: center;
+h1{
+    margin:5px 0 14px;
+    font-size:30px;
 }
 
-h1 {
-    margin: 5px 0 14px;
-    font-size: 30px;
+.clockRow{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:8px 0;
+    font-size:19px;
+    font-weight:bold;
 }
 
-/* =========================
-   CLOCKS
-========================= */
-
-.clockRow {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 8px 0;
-    font-size: 19px;
-    font-weight: bold;
+.clock{
+    min-width:110px;
+    padding:7px 12px;
+    background:#111;
+    color:white;
+    border:2px solid #444;
+    border-radius:8px;
+    font-family:monospace;
+    font-size:25px;
 }
 
-.clock {
-    min-width: 110px;
-    padding: 7px 12px;
-
-    background: #111;
-    color: white;
-
-    border: 2px solid #444;
-    border-radius: 8px;
-
-    font-family: monospace;
-    font-size: 25px;
+#board{
+    width:min(94vw,700px);
+    aspect-ratio:1;
+    margin:auto;
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    grid-template-rows:repeat(8,1fr);
+    border:4px solid #111;
+    overflow:hidden;
+    box-shadow:0 6px 25px rgba(0,0,0,.45);
 }
 
-/* =========================
-   BOARD
-========================= */
-
-#board {
-    width: min(94vw, 700px);
-    aspect-ratio: 1 / 1;
-
-    margin: auto;
-
-    display: grid;
-
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(8, 1fr);
-
-    border: 4px solid #111;
-    overflow: hidden;
-
-    box-shadow: 0 6px 25px rgba(0,0,0,.45);
+.square{
+    min-width:0;
+    min-height:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    cursor:pointer;
+    user-select:none;
+    font-size:clamp(36px,8vw,72px);
 }
 
-.square {
-    min-width: 0;
-    min-height: 0;
+.light{background:#ebecd0}
+.dark{background:#779556}
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    position: relative;
-
-    cursor: pointer;
-    user-select: none;
-
-    font-size: clamp(36px, 8vw, 72px);
+.selected{
+    box-shadow:inset 0 0 0 5px #f4d03f;
 }
 
-.light {
-    background: #ebecd0;
+.target::after{
+    content:"";
+    position:absolute;
+    width:20%;
+    height:20%;
+    border-radius:50%;
+    background:rgba(30,30,30,.45);
+    z-index:2;
 }
 
-.dark {
-    background: #779556;
+.capture{
+    box-shadow:inset 0 0 0 5px rgba(210,50,45,.85);
 }
 
-.selected {
-    box-shadow: inset 0 0 0 5px #f4d03f;
+.piece{
+    position:relative;
+    z-index:5;
+    line-height:1;
+    transform:scale(1.08);
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));
 }
 
-.target::after {
-    content: "";
-
-    position: absolute;
-
-    width: 20%;
-    height: 20%;
-
-    border-radius: 50%;
-
-    background: rgba(30,30,30,.45);
-
-    z-index: 2;
-}
-
-.capture {
-    box-shadow:
-        inset 0 0 0 5px rgba(210,50,45,.85);
-}
-
-/* =========================
-   PIECES
-========================= */
-
-.piece {
-    position: relative;
-    z-index: 5;
-
-    line-height: 1;
-
-    transform: scale(1.08);
-
-    filter: drop-shadow(
-        0 2px 2px rgba(0,0,0,.5)
-    );
-}
-
-.whitePiece {
-    color: white;
-
+.whitePiece{
+    color:white;
     text-shadow:
         -3px -3px 0 #111,
          3px -3px 0 #111,
         -3px  3px 0 #111,
          3px  3px 0 #111,
-        -2px  0 0 #111,
-         2px  0 0 #111,
+        -2px 0 0 #111,
+         2px 0 0 #111,
          0 -2px 0 #111,
-         0  2px 0 #111,
-         0  0 4px #111;
+         0 2px 0 #111;
 }
 
-.blackPiece {
-    color: #111;
-
+.blackPiece{
+    color:#111;
     text-shadow:
         -3px -3px 0 white,
          3px -3px 0 white,
         -3px  3px 0 white,
          3px  3px 0 white,
-        -2px  0 0 white,
-         2px  0 0 white,
+        -2px 0 0 white,
+         2px 0 0 white,
          0 -2px 0 white,
-         0  2px 0 white,
-         0  0 4px white;
+         0 2px 0 white;
 }
 
-/* =========================
-   UI
-========================= */
-
-#status {
-    min-height: 28px;
-    margin: 12px 0;
-
-    font-size: 18px;
-    font-weight: bold;
+#status{
+    min-height:28px;
+    margin:12px 0;
+    font-size:18px;
+    font-weight:bold;
 }
 
-button {
-    margin: 9px auto;
-    padding: 10px 20px;
-
-    border: 1px solid #666;
-    border-radius: 7px;
-
-    background: #3c3a38;
-    color: white;
-
-    cursor: pointer;
-    font-size: 16px;
+button{
+    margin:9px auto;
+    padding:10px 20px;
+    border:1px solid #666;
+    border-radius:7px;
+    background:#3c3a38;
+    color:white;
+    cursor:pointer;
+    font-size:16px;
 }
 
-button:hover {
-    background: #514e4b;
+button:hover{background:#514e4b}
+
+#strengthBox{
+    margin-top:10px;
+    background:#111;
+    border:1px solid #444;
+    border-radius:7px;
+    padding:10px;
 }
 
-#strengthBox {
-    margin-top: 10px;
+#strength{width:85%}
 
-    background: #111;
-    border: 1px solid #444;
-    border-radius: 7px;
-
-    padding: 10px;
+#strengthLabel{
+    margin-top:5px;
+    font-family:monospace;
 }
 
-#strength {
-    width: 85%;
+#info,#moves{
+    background:#111;
+    border:1px solid #444;
+    border-radius:7px;
+    padding:10px;
+    margin-top:10px;
+    font-family:monospace;
+    font-size:13px;
+    word-break:break-word;
 }
 
-#strengthLabel {
-    margin-top: 5px;
-
-    font-family: monospace;
-    font-size: 15px;
-}
-
-#info,
-#moves {
-    background: #111;
-
-    border: 1px solid #444;
-    border-radius: 7px;
-
-    padding: 10px;
-    margin-top: 10px;
-
-    font-family: monospace;
-    font-size: 13px;
-
-    word-break: break-word;
-}
-
-#moves {
-    max-height: 100px;
-    overflow: auto;
+#moves{
+    max-height:100px;
+    overflow:auto;
 }
 </style>
 </head>
 
 <body>
-
 <div id="app">
 
     <h1>♟ CheckForge</h1>
@@ -275,12 +206,9 @@ button:hover {
 
     <div id="status">Loading Stockfish...</div>
 
-    <button id="newGame">
-        New Game
-    </button>
+    <button id="newGame">New Game</button>
 
     <div id="strengthBox">
-
         <div>Engine Strength</div>
 
         <input
@@ -292,224 +220,142 @@ button:hover {
             value="1400"
         >
 
-        <div id="strengthLabel">
-            1400 Elo
-        </div>
-
+        <div id="strengthLabel">1400 Elo</div>
     </div>
 
-    <div id="info">
-        Loading engine...
-    </div>
+    <div id="info">Starting engine...</div>
 
     <div id="moves"></div>
 
 </div>
 
-
 <script>
-
 /* =========================================================
    CHECKFORGE
 ========================================================= */
 
-const boardElement =
-    document.getElementById("board");
+const boardElement = document.getElementById("board");
+const statusElement = document.getElementById("status");
+const infoElement = document.getElementById("info");
+const whiteClockElement = document.getElementById("whiteClock");
+const blackClockElement = document.getElementById("blackClock");
+const movesElement = document.getElementById("moves");
+const strengthElement = document.getElementById("strength");
+const strengthLabel = document.getElementById("strengthLabel");
+const newGameButton = document.getElementById("newGame");
 
-const statusElement =
-    document.getElementById("status");
-
-const infoElement =
-    document.getElementById("info");
-
-const whiteClockElement =
-    document.getElementById("whiteClock");
-
-const blackClockElement =
-    document.getElementById("blackClock");
-
-const movesElement =
-    document.getElementById("moves");
-
-const strengthElement =
-    document.getElementById("strength");
-
-const strengthLabel =
-    document.getElementById("strengthLabel");
-
-const newGameButton =
-    document.getElementById("newGame");
-
-
-/* =========================================================
-   GAME
-========================================================= */
+const PIECES = {
+    wp:"♙",
+    wn:"♘",
+    wb:"♗",
+    wr:"♖",
+    wq:"♕",
+    wk:"♔",
+    bp:"♟",
+    bn:"♞",
+    bb:"♝",
+    br:"♜",
+    bq:"♛",
+    bk:"♚"
+};
 
 let game = new Chess();
 
 let selected = null;
 
 let engine = null;
-
 let engineReady = false;
-
 let engineThinking = false;
-
-let gameOver = false;
-
 let engineElo = 1400;
 
+let whiteTime = 600000;
+let blackTime = 600000;
+let lastClock = performance.now();
+
+let gameOver = false;
 let moveHistory = [];
 
 
 /* =========================================================
-   CLOCK
+   BOARD
 ========================================================= */
 
-let whiteTime = 600000;
-
-let blackTime = 600000;
-
-let lastClockTime =
-    performance.now();
-
-let clockTimer = null;
-
-
-/* =========================================================
-   DRAW BOARD
-========================================================= */
-
-function drawBoard() {
+function drawBoard(){
 
     boardElement.innerHTML = "";
 
-    const position =
-        game.board();
+    const board = game.board();
 
     let legalMoves = [];
 
-    if (selected) {
-
-        legalMoves =
-            game.moves({
-                square: selected,
-                verbose: true
-            });
+    if(selected){
+        legalMoves = game.moves({
+            square:selected,
+            verbose:true
+        });
     }
 
+    for(let row=0; row<8; row++){
 
-    for (let row = 0; row < 8; row++) {
-
-        for (let col = 0; col < 8; col++) {
+        for(let col=0; col<8; col++){
 
             const squareName =
                 String.fromCharCode(97 + col) +
                 (8 - row);
 
-
             const square =
                 document.createElement("div");
-
 
             square.className =
                 "square " +
                 (
                     (row + col) % 2 === 0
-                        ? "light"
-                        : "dark"
+                    ? "light"
+                    : "dark"
                 );
 
-
-            if (squareName === selected) {
-
-                square.classList.add(
-                    "selected"
-                );
+            if(squareName === selected){
+                square.classList.add("selected");
             }
-
 
             const target =
                 legalMoves.find(
-                    move =>
-                        move.to === squareName
+                    m => m.to === squareName
                 );
 
-
-            if (target) {
-
-                if (position[row][col]) {
-
-                    square.classList.add(
-                        "capture"
-                    );
-
-                } else {
-
-                    square.classList.add(
-                        "target"
-                    );
-                }
+            if(target){
+                square.classList.add(
+                    board[row][col]
+                    ? "capture"
+                    : "target"
+                );
             }
 
+            const piece = board[row][col];
 
-            const piece =
-                position[row][col];
-
-
-            if (piece) {
+            if(piece){
 
                 const span =
                     document.createElement("span");
-
 
                 span.className =
                     "piece " +
                     (
                         piece.color === "w"
-                            ? "whitePiece"
-                            : "blackPiece"
+                        ? "whitePiece"
+                        : "blackPiece"
                     );
 
-
-                const whiteSymbols =
-                    {
-                        p: "♙",
-                        n: "♘",
-                        b: "♗",
-                        r: "♖",
-                        q: "♕",
-                        k: "♔"
-                    };
-
-
-                const blackSymbols =
-                    {
-                        p: "♟",
-                        n: "♞",
-                        b: "♝",
-                        r: "♜",
-                        q: "♛",
-                        k: "♚"
-                    };
-
-
                 span.textContent =
-                    piece.color === "w"
-                        ? whiteSymbols[piece.type]
-                        : blackSymbols[piece.type];
-
+                    PIECES[
+                        piece.color + piece.type
+                    ];
 
                 square.appendChild(span);
             }
 
-
             square.onclick =
-                () =>
-                    handleSquareClick(
-                        squareName
-                    );
-
+                () => clickSquare(squareName);
 
             boardElement.appendChild(square);
         }
@@ -521,107 +367,67 @@ function drawBoard() {
    PLAYER MOVE
 ========================================================= */
 
-function handleSquareClick(square) {
+function clickSquare(square){
 
-    if (gameOver)
+    if(gameOver || engineThinking)
         return;
 
-
-    if (engineThinking)
+    if(game.turn() !== "w")
         return;
 
+    if(selected === null){
 
-    if (game.turn() !== "w")
-        return;
+        const piece = game.get(square);
 
-
-    if (selected === null) {
-
-        const piece =
-            game.get(square);
-
-
-        if (
-            piece &&
-            piece.color === "w"
-        ) {
-
-            selected =
-                square;
-
+        if(piece && piece.color === "w"){
+            selected = square;
             drawBoard();
         }
 
         return;
     }
 
-
-    if (square === selected) {
+    if(square === selected){
 
         selected = null;
-
         drawBoard();
-
         return;
     }
 
-
-    const legalMoves =
-        game.moves({
-            square: selected,
-            verbose: true
-        });
-
+    const legalMoves = game.moves({
+        square:selected,
+        verbose:true
+    });
 
     const chosen =
         legalMoves.find(
-            move =>
-                move.to === square
+            move => move.to === square
         );
 
+    if(!chosen){
 
-    if (!chosen) {
+        const piece = game.get(square);
 
-        const piece =
-            game.get(square);
-
-
-        if (
-            piece &&
-            piece.color === "w"
-        ) {
-
-            selected =
-                square;
-
-        } else {
-
-            selected =
-                null;
+        if(piece && piece.color === "w"){
+            selected = square;
+        }else{
+            selected = null;
         }
 
-
         drawBoard();
-
         return;
     }
 
-
     let promotion = "q";
-
 
     const movingPiece =
         game.get(selected);
 
-
-    if (
+    if(
         movingPiece &&
         movingPiece.type === "p" &&
-        (
-            square[1] === "1" ||
-            square[1] === "8"
-        )
-    ) {
+        (square[1] === "1" || square[1] === "8")
+    ){
 
         promotion =
             prompt(
@@ -629,235 +435,173 @@ function handleSquareClick(square) {
                 "q"
             );
 
-
-        if (
-            ![
-                "q",
-                "r",
-                "b",
-                "n"
-            ].includes(promotion)
-        ) {
-
+        if(!["q","r","b","n"].includes(promotion)){
             promotion = "q";
         }
     }
 
+    const result = game.move({
+        from:selected,
+        to:square,
+        promotion:promotion
+    });
 
-    const result =
-        game.move({
-            from: selected,
-            to: square,
-            promotion: promotion
-        });
-
-
-    if (!result)
+    if(!result)
         return;
-
 
     selected = null;
 
-
-    moveHistory.push(
-        result.san
-    );
-
-
+    moveHistory.push(result.san);
     updateMoveList();
 
-
-    /*
-       Black's clock begins.
-    */
-
-    lastClockTime =
-        performance.now();
-
+    lastClock = performance.now();
 
     drawBoard();
 
-
-    if (checkGameEnd())
+    if(checkGameEnd())
         return;
 
-
     updateStatus();
-
-
-    /*
-       Ask Stockfish.
-    */
 
     startEngine();
 }
 
 
 /* =========================================================
-   LOAD STOCKFISH FROM LOCAL GITHUB PAGES FILE
+   STOCKFISH LOADER
 ========================================================= */
 
-function loadEngine() {
+/*
+   IMPORTANT:
 
-    /*
-       IMPORTANT:
-
-       These files must be NEXT TO index.html:
+   These two files must be in the SAME folder as index.html:
 
        stockfish-18-lite-single.js
        stockfish-18-lite-single.wasm
-    */
+
+   The #WASM form is the loader format used by browser
+   Stockfish integrations for this build.
+*/
+
+function loadEngine(){
 
     infoElement.textContent =
         "Starting Stockfish 18...";
 
+    try{
 
-    try {
+        const workerPath =
+            "./stockfish-18-lite-single.js" +
+            "#" +
+            "./stockfish-18-lite-single.wasm";
 
         engine =
-            new Worker(
-                "./stockfish-18-lite-single.js"
-            );
+            new Worker(workerPath);
 
+        engine.onmessage =
+            handleEngineMessage;
 
-    } catch (error) {
+        engine.onerror =
+            function(error){
 
-        engineReady = false;
+                console.error(
+                    "Stockfish worker error:",
+                    error
+                );
+
+                engineReady = false;
+                engineThinking = false;
+
+                statusElement.textContent =
+                    "Stockfish failed to load.";
+
+                infoElement.textContent =
+                    "Check the browser console for the exact error.";
+            };
+
+        engine.postMessage("uci");
+
+    }catch(error){
+
+        console.error(
+            "Stockfish startup error:",
+            error
+        );
 
         statusElement.textContent =
             "Stockfish failed to start.";
 
         infoElement.textContent =
             error.message;
-
-        return;
     }
-
-
-    engine.onmessage =
-        handleEngineMessage;
-
-
-    engine.onerror =
-        function(error) {
-
-            console.error(
-                "Stockfish worker error:",
-                error
-            );
-
-
-            engineReady = false;
-
-            engineThinking = false;
-
-
-            statusElement.textContent =
-                "Stockfish failed to load.";
-
-
-            infoElement.textContent =
-                "Make sure the .js and .wasm files are in the repository root.";
-        };
-
-
-    /*
-       Start UCI.
-    */
-
-    engine.postMessage(
-        "uci"
-    );
 }
 
 
 /* =========================================================
-   STOCKFISH MESSAGE
+   STOCKFISH MESSAGES
 ========================================================= */
 
-function handleEngineMessage(event) {
+function handleEngineMessage(event){
 
     const line =
         typeof event.data === "string"
-            ? event.data.trim()
-            : "";
+        ? event.data.trim()
+        : "";
 
-
-    if (line === "uciok") {
+    if(line === "uciok"){
 
         engine.postMessage(
             "setoption name UCI_LimitStrength value true"
         );
-
 
         engine.postMessage(
             "setoption name UCI_Elo value " +
             engineElo
         );
 
-
-        engine.postMessage(
-            "isready"
-        );
-
+        engine.postMessage("isready");
 
         return;
     }
 
-
-    if (line === "readyok") {
+    if(line === "readyok"){
 
         engineReady = true;
-
 
         infoElement.textContent =
             "Stockfish 18 ready — " +
             engineElo +
             " Elo";
 
-
         updateStatus();
-
 
         return;
     }
 
-
-    if (
-        line.startsWith("info")
-    ) {
+    if(line.startsWith("info")){
 
         showEngineInfo(line);
 
         return;
     }
 
-
-    if (
-        line.startsWith("bestmove")
-    ) {
+    if(line.startsWith("bestmove")){
 
         const parts =
             line.split(/\s+/);
 
+        const bestMove = parts[1];
 
-        const bestMove =
-            parts[1];
-
-
-        if (
+        if(
             bestMove &&
             bestMove !== "(none)"
-        ) {
+        ){
 
-            playEngineMove(
-                bestMove
-            );
+            playEngineMove(bestMove);
 
-        } else {
+        }else{
 
             engineThinking = false;
-
             updateStatus();
         }
     }
@@ -868,12 +612,10 @@ function handleEngineMessage(event) {
    ENGINE INFO
 ========================================================= */
 
-function showEngineInfo(line) {
+function showEngineInfo(line){
 
     const depth =
-        line.match(
-            /\bdepth\s+(\d+)/
-        );
+        line.match(/\bdepth\s+(\d+)/);
 
     const score =
         line.match(
@@ -881,76 +623,58 @@ function showEngineInfo(line) {
         );
 
     const nodes =
-        line.match(
-            /\bnodes\s+(\d+)/
-        );
+        line.match(/\bnodes\s+(\d+)/);
 
     const time =
-        line.match(
-            /\btime\s+(\d+)/
-        );
-
+        line.match(/\btime\s+(\d+)/);
 
     let text = "";
 
-
-    if (depth) {
-
+    if(depth){
         text +=
             "Depth: " +
             depth[1];
     }
 
-
-    if (score) {
+    if(score){
 
         text += " | ";
 
-
-        if (score[1] === "mate") {
+        if(score[1] === "mate"){
 
             text +=
                 "Mate: " +
                 score[2];
 
-        } else {
+        }else{
 
             text +=
                 "Eval: " +
                 (
-                    Number(
-                        score[2]
-                    ) / 100
+                    Number(score[2]) / 100
                 ).toFixed(2);
         }
     }
 
-
-    if (nodes) {
+    if(nodes){
 
         text +=
             " | Nodes: " +
             nodes[1];
     }
 
-
-    if (time) {
+    if(time){
 
         text +=
             " | Search: " +
             (
-                Number(
-                    time[1]
-                ) / 1000
+                Number(time[1]) / 1000
             ).toFixed(1) +
             "s";
     }
 
-
-    if (text) {
-
-        infoElement.textContent =
-            text;
+    if(text){
+        infoElement.textContent = text;
     }
 }
 
@@ -959,52 +683,48 @@ function showEngineInfo(line) {
    ENGINE TURN
 ========================================================= */
 
-function startEngine() {
+function startEngine(){
 
-    if (
+    /*
+       If Stockfish hasn't finished loading,
+       don't freeze the board.
+    */
+
+    if(
+        !engine ||
         !engineReady ||
         engineThinking ||
         gameOver
-    )
+    ){
+
+        if(!engineReady){
+            statusElement.textContent =
+                "Your move is recorded — Stockfish is loading...";
+        }
+
         return;
+    }
 
-
-    if (game.turn() !== "b")
+    if(game.turn() !== "b")
         return;
-
 
     engineThinking = true;
 
-
     statusElement.textContent =
         "Stockfish thinking...";
-
-
-    /*
-       Give Stockfish the exact position.
-    */
 
     engine.postMessage(
         "position fen " +
         game.fen()
     );
 
-
-    /*
-       3 to 7 seconds.
-    */
-
     const thinkTime =
         chooseThinkingTime();
 
-
     infoElement.textContent =
         "Thinking for " +
-        (
-            thinkTime / 1000
-        ).toFixed(1) +
+        (thinkTime / 1000).toFixed(1) +
         " seconds...";
-
 
     engine.postMessage(
         "go movetime " +
@@ -1017,73 +737,49 @@ function startEngine() {
    THINKING TIME
 ========================================================= */
 
-function chooseThinkingTime() {
+function chooseThinkingTime(){
 
-    const legalMoves =
+    const moves =
         game.moves({
-            verbose: true
+            verbose:true
         });
-
 
     let tactical = 0;
 
+    for(const move of moves){
 
-    for (
-        const move of legalMoves
-    ) {
-
-        if (move.captured)
+        if(move.captured)
             tactical++;
 
-
-        if (move.promotion)
+        if(move.promotion)
             tactical++;
 
-
-        if (
+        if(
             move.san &&
             (
                 move.san.includes("+") ||
                 move.san.includes("#")
             )
-        ) {
-
+        ){
             tactical++;
         }
     }
 
-
-    /*
-       Minimum 3 seconds.
-    */
-
     let time = 3000;
 
-
-    if (tactical >= 2)
+    if(tactical >= 2)
         time += 1000;
 
-
-    if (tactical >= 4)
+    if(tactical >= 4)
         time += 1500;
 
-
-    if (game.in_check())
+    if(game.in_check())
         time += 1500;
 
-
-    if (legalMoves.length <= 8)
+    if(moves.length <= 8)
         time += 500;
 
-
-    /*
-       Maximum 7 seconds.
-    */
-
-    return Math.min(
-        7000,
-        time
-    );
+    return Math.min(7000,time);
 }
 
 
@@ -1091,66 +787,44 @@ function chooseThinkingTime() {
    ENGINE MOVE
 ========================================================= */
 
-function playEngineMove(uci) {
+function playEngineMove(uci){
 
-    const from =
-        uci.substring(0, 2);
-
-    const to =
-        uci.substring(2, 4);
+    const from = uci.substring(0,2);
+    const to = uci.substring(2,4);
 
     const promotion =
         uci.length >= 5
-            ? uci[4]
-            : "q";
-
+        ? uci[4]
+        : "q";
 
     const result =
         game.move({
-            from: from,
-            to: to,
-            promotion: promotion
+            from:from,
+            to:to,
+            promotion:promotion
         });
 
-
-    if (!result) {
+    if(!result){
 
         engineThinking = false;
 
         statusElement.textContent =
-            "Engine move error.";
+            "Stockfish returned an invalid move.";
 
         return;
     }
 
-
-    moveHistory.push(
-        result.san
-    );
-
-
+    moveHistory.push(result.san);
     updateMoveList();
-
 
     engineThinking = false;
 
-
-    /*
-       White's clock begins.
-    */
-
-    lastClockTime =
-        performance.now();
-
+    lastClock = performance.now();
 
     drawBoard();
 
-
-    if (
-        checkGameEnd()
-    )
+    if(checkGameEnd())
         return;
-
 
     updateStatus();
 }
@@ -1160,27 +834,25 @@ function playEngineMove(uci) {
    STATUS
 ========================================================= */
 
-function updateStatus() {
+function updateStatus(){
 
-    if (gameOver)
+    if(gameOver)
         return;
 
-
-    if (game.in_check()) {
+    if(game.turn() === "w"){
 
         statusElement.textContent =
-            game.turn() === "w"
-                ? "You are in check!"
-                : "Stockfish is in check!";
+            game.in_check()
+            ? "Your king is in check!"
+            : "Your turn";
 
-        return;
-    }
+    }else{
 
-
-    statusElement.textContent =
-        game.turn() === "w"
-            ? "Your turn"
+        statusElement.textContent =
+            game.in_check()
+            ? "Stockfish is in check!"
             : "Stockfish thinking...";
+    }
 }
 
 
@@ -1188,40 +860,33 @@ function updateStatus() {
    GAME END
 ========================================================= */
 
-function checkGameEnd() {
+function checkGameEnd(){
 
-    if (!game.game_over())
+    if(!game.game_over())
         return false;
 
-
     gameOver = true;
-
     engineThinking = false;
 
+    if(engine){
 
-    if (engine) {
-
-        try {
-            engine.postMessage(
-                "stop"
-            );
-        } catch (e) {}
+        try{
+            engine.postMessage("stop");
+        }catch(e){}
     }
 
-
-    if (game.in_check()) {
+    if(game.in_check()){
 
         statusElement.textContent =
             game.turn() === "w"
-                ? "Checkmate! Stockfish wins!"
-                : "Checkmate! You win!";
+            ? "Checkmate! Stockfish wins!"
+            : "Checkmate! You win!";
 
-    } else {
+    }else{
 
         statusElement.textContent =
             "Draw!";
     }
-
 
     return true;
 }
@@ -1231,107 +896,69 @@ function checkGameEnd() {
    CLOCK
 ========================================================= */
 
-function formatTime(ms) {
+function formatTime(ms){
 
     const totalSeconds =
-        Math.ceil(
-            ms / 1000
-        );
-
+        Math.ceil(ms / 1000);
 
     const minutes =
-        Math.floor(
-            totalSeconds / 60
-        );
-
+        Math.floor(totalSeconds / 60);
 
     const seconds =
         totalSeconds % 60;
 
-
     return (
-        String(minutes)
-            .padStart(2, "0") +
+        String(minutes).padStart(2,"0") +
         ":" +
-        String(seconds)
-            .padStart(2, "0")
+        String(seconds).padStart(2,"0")
     );
 }
 
 
-function updateClock() {
+function updateClock(){
 
-    if (gameOver)
+    if(gameOver)
         return;
 
-
-    const now =
-        performance.now();
-
+    const now = performance.now();
 
     const elapsed =
-        now -
-        lastClock;
+        now - lastClock;
 
+    lastClock = now;
 
-    lastClock =
-        now;
+    if(game.turn() === "w"){
 
+        whiteTime -= elapsed;
 
-    if (game.turn() === "w") {
+    }else{
 
-        whiteTime -=
-            elapsed;
-
-    } else {
-
-        blackTime -=
-            elapsed;
+        blackTime -= elapsed;
     }
 
-
     whiteTime =
-        Math.max(
-            0,
-            whiteTime
-        );
-
+        Math.max(0,whiteTime);
 
     blackTime =
-        Math.max(
-            0,
-            blackTime
-        );
-
+        Math.max(0,blackTime);
 
     whiteClockElement.textContent =
-        formatTime(
-            whiteTime
-        );
-
+        formatTime(whiteTime);
 
     blackClockElement.textContent =
-        formatTime(
-            blackTime
-        );
+        formatTime(blackTime);
 
 
-    if (whiteTime <= 0) {
+    if(whiteTime <= 0){
 
         gameOver = true;
-
         engineThinking = false;
 
-
-        if (engine) {
-
-            try {
-                engine.postMessage(
-                    "stop"
-                );
-            } catch (e) {}
+        if(engine){
+            try{
+                engine.postMessage("stop");
+            }catch(e){}
         }
-
 
         statusElement.textContent =
             "⏰ Time! Stockfish wins!";
@@ -1340,22 +967,16 @@ function updateClock() {
     }
 
 
-    if (blackTime <= 0) {
+    if(blackTime <= 0){
 
         gameOver = true;
-
         engineThinking = false;
 
-
-        if (engine) {
-
-            try {
-                engine.postMessage(
-                    "stop"
-                );
-            } catch (e) {}
+        if(engine){
+            try{
+                engine.postMessage("stop");
+            }catch(e){}
         }
-
 
         statusElement.textContent =
             "⏰ Time! You win!";
@@ -1367,36 +988,31 @@ function updateClock() {
    MOVE LIST
 ========================================================= */
 
-function updateMoveList() {
+function updateMoveList(){
 
     let text = "";
 
-
-    for (
+    for(
         let i = 0;
         i < moveHistory.length;
         i++
-    ) {
+    ){
 
-        if (i % 2 === 0) {
+        if(i % 2 === 0){
 
             text +=
                 (
-                    Math.floor(i / 2) +
-                    1
+                    Math.floor(i / 2) + 1
                 ) +
                 ". ";
         }
-
 
         text +=
             moveHistory[i] +
             " ";
     }
 
-
-    movesElement.textContent =
-        text;
+    movesElement.textContent = text;
 }
 
 
@@ -1406,28 +1022,22 @@ function updateMoveList() {
 
 strengthElement.addEventListener(
     "input",
-    function() {
+    function(){
 
         engineElo =
-            Number(
-                strengthElement.value
-            );
-
+            Number(this.value);
 
         strengthLabel.textContent =
-            engineElo +
-            " Elo";
+            engineElo + " Elo";
 
-
-        if (
+        if(
             engine &&
             engineReady
-        ) {
+        ){
 
             engine.postMessage(
                 "setoption name UCI_LimitStrength value true"
             );
-
 
             engine.postMessage(
                 "setoption name UCI_Elo value " +
@@ -1444,55 +1054,41 @@ strengthElement.addEventListener(
 
 newGameButton.addEventListener(
     "click",
-    function() {
+    function(){
 
-        if (engine) {
+        if(engine){
 
-            try {
-                engine.postMessage(
-                    "stop"
-                );
-            } catch (e) {}
+            try{
+                engine.postMessage("stop");
+            }catch(e){}
         }
 
-
-        game =
-            new Chess();
-
+        game = new Chess();
 
         selected = null;
-
         engineThinking = false;
-
         gameOver = false;
-
 
         whiteTime = 600000;
         blackTime = 600000;
 
-
-        lastClock =
-            performance.now();
-
+        lastClock = performance.now();
 
         moveHistory = [];
-
 
         drawBoard();
         updateMoveList();
         updateClock();
 
-
         statusElement.textContent =
             engineReady
-                ? "Your turn"
-                : "Loading Stockfish...";
-
+            ? "Your turn"
+            : "Loading Stockfish...";
 
         infoElement.textContent =
             engineReady
-                ? "Stockfish ready"
-                : "Loading engine...";
+            ? "Stockfish ready"
+            : "Loading engine...";
     }
 );
 
@@ -1502,11 +1098,8 @@ newGameButton.addEventListener(
 ========================================================= */
 
 drawBoard();
-
 updateClock();
-
 updateStatus();
-
 
 clockTimer =
     setInterval(
@@ -1514,13 +1107,7 @@ clockTimer =
         50
     );
 
-
-/*
-   Start the local Stockfish worker.
-*/
-
 loadEngine();
-
 </script>
 
 </body>
