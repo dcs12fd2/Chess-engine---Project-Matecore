@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>CheckForge Chess</title>
+
+<!-- Chess rules -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+}
+
+body {
+    background: #262421;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    justify-content: center;
+}
+
+#app {
+    width: min(96vw, 760px);
+    padding: 14px;
+    text-align: center;
+}
+
+h1 {
+    margin: 5px 0 14px;
+    font-size: 30px;
+}
+
+.clockRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 0;
+    font-size: 19px;
+    font-weight: bold;
+}
+
+.clock {
+    min-width: 110px;
+    padding: 7px 12px;
+
+    background: #111;
+    color: white;
+
+    border: 2px solid #444;
+    border-radius: 8px;
+
+    font-family: monospace;
+    font-size: 25px;
+}
+
+#board {
+    width: min(94vw, 700px);
+    aspect-ratio: 1 / 1;
+    margin: auto;
+
+    display: grid;
+
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+
+    border: 4px solid #111;
+    overflow: hidden;
+
+    box-shadow: 0 6px 25px rgba(0,0,0,.45);
+}
+
+.square {
+    min-width: 0;
+    min-height: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+
+    cursor: pointer;
+    user-select: none;
+
+    font-size: clamp(36px, 8vw, 72px);
+}
+
+.light {
+    background: #ebecd0;
+}
+
+.dark {
+    background: #779556;
+}
+
+.selected {
+    box-shadow: inset 0 0 0 5px #f4d03f;
+}
+
+.target::after {
+    content: "";
+
+    position: absolute;
+
+    width: 20%;
+    height: 20%;
+
+    border-radius: 50%;
+
+    background: rgba(30,30,30,.45);
+}
+
+.capture {
+    box-shadow:
+        inset 0 0 0 5px rgba(210,50,45,.85);
+}
+
+.piece {
+    position: relative;
+    z-index: 5;
+
+    line-height: 1;
+
+    transform: scale(1.08);
+
+    filter: drop-shadow(
+        0 2px 2px rgba(0,0,0,.45)
+    );
+}
+
+.whitePiece {
+    color: white;
+
+    text-shadow:
+        -3px -3px 0 #111,
+         3px -3px 0 #111,
+        -3px  3px 0 #111,
+         3px  3px 0 #111,
+        -2px  0 0 #111,
+         2px  0 0 #111,
+         0 -2px 0 #111,
+         0  2px 0 #111,
+         0  0 4px #111;
+}
+
+.blackPiece {
+    color: #111;
+
+    text-shadow:
+        -3px -3px 0 white,
+         3px -3px 0 white,
+        -3px  3px 0 white,
+         3px  3px 0 white,
+        -2px  0 0 white,
+         2px  0 0 white,
+         0 -2px 0 white,
+         0  2px 0 white,
+         0  0 4px white;
+}
+
+#status {
+    min-height: 27px;
+    margin: 12px 0;
+
+    font-size: 18px;
+    font-weight: bold;
+}
+
+button {
+    margin: 9px auto;
+    padding: 10px 20px;
+
+    border: 1px solid #666;
+    border-radius: 7px;
+
+    background: #3c3a38;
+    color: white;
+
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background: #514e4b;
+}
+
+#strengthBox {
+    margin-top: 10px;
+
+    background: #111;
+    border: 1px solid #444;
+    border-radius: 7px;
+
+    padding: 10px;
+}
+
+#strength {
+    width: 85%;
+}
+
+#strengthLabel {
+    margin-top: 5px;
+
+    font-family: monospace;
+    font-size: 15px;
+}
+
+#info,
+#moves {
+    background: #111;
+
+    border: 1px solid #444;
+    border-radius: 7px;
+
+    padding: 10px;
+    margin-top: 10px;
+
+    font-family: monospace;
+    font-size: 13px;
+
+    word-break: break-word;
+}
+
+#moves {
+    max-height: 100px;
+    overflow: auto;
+}
+</style>
+</head>
+
+<body>
+
+<div id="app">
+
+    <h1>♟ CheckForge</h1>
+
+    <div class="clockRow">
+        <span>🤖 BLACK</span>
+        <span id="blackClock" class="clock">10:00</span>
+    </div>
+
+    <div id="board"></div>
+
+    <div class="clockRow">
+        <span>👤 WHITE</span>
+        <span id="whiteClock" class="clock">10:00</span>
+    </div>
+
+    <div id="status">Loading CheckForge...</div>
+
+    <button id="newGame">
+        New Game
+    </button>
+
+    <div id="strengthBox">
+
+        <div>Engine Strength</div>
+
+        <input
+            id="strength"
+            type="range"
+            min="1000"
+            max="2500"
+            step="50"
+            value="1400"
+        >
+
+        <div id="strengthLabel">
+            1400 Elo
+        </div>
+
+    </div>
+
+    <div id="info">
+        Starting engine...
+    </div>
+
+    <div id="moves"></div>
+
+</div>
+
+<script>
+
+/* =========================================================
+   CHECKFORGE
+   Custom interface + chess.js + Stockfish 18
+========================================================= */
+
+const boardElement =
+    document.getElementById("board");
+
+const statusElement =
+    document.getElementById("status");
+
+const infoElement =
+    document.getElementById("info");
+
+const whiteClockElement =
+    document.getElementById("whiteClock");
+
+const blackClockElement =
+    document.getElementById("blackClock");
+
+const movesElement =
+    document.getElementById("moves");
+
+const strengthElement =
+    document.getElementById("strength");
+
+const strengthLabel =
+    document.getElementById("strengthLabel");
+
+const newGameButton =
+    document.getElementById("newGame");
+
+
+/* =========================================================
+   GAME
+========================================================= */
+
+let game =
+    new Chess();
+
+let selected =
+    null;
+
+let engine =
+    null;
+
+let engineReady =
+    false;
+
+let engineThinking =
+    false;
+
+let gameOver =
+    false;
+
+let engineElo =
+    1400;
+
+let whiteTime =
+    600000;
+
+let blackTime =
+    600000;
+
+let lastClock =
+    performance.now();
+
+let clockInterval =
+    null;
+
+let moveHistory =
+    [];
+
+
+/* =========================================================
+   ENGINE FILES
+========================================================= */
+
+const ENGINE_JS =
+    "https://unpkg.com/stockfish@18.0.8/bin/stockfish-18-lite-single.js";
+
+const ENGINE_WASM =
+    "https://unpkg.com/stockfish@18.0.8/bin/stockfish-18-lite-single.wasm";
+
+
+/* =========================================================
+   DRAW BOARD
+========================================================= */
+
+function drawBoard() {
+
+    boardElement.innerHTML = "";
+
+    const position =
+        game.board();
+
+    let legalMoves = [];
+
+    if (selected) {
+
+        legalMoves =
+            game.moves({
+                square: selected,
+                verbose: true
+            });
+    }
+
+
+    for (let row = 0; row < 8; row++) {
+
+        for (let col = 0; col < 8; col++) {
+
+            const squareName =
+                String.fromCharCode(97 + col) +
+                (8 - row);
+
+
+            const square =
+                document.createElement("div");
+
+
+            square.className =
+                "square " +
+                (
+                    (row + col) % 2 === 0
+                        ? "light"
+                        : "dark"
+                );
+
+
+            if (squareName === selected) {
+
+                square.classList.add(
+                    "selected"
+                );
+            }
+
+
+            const target =
+                legalMoves.find(
+                    move =>
+                        move.to === squareName
+                );
+
+
+            if (target) {
+
+                if (position[row][col]) {
+
+                    square.classList.add(
+                        "capture"
+                    );
+
+                } else {
+
+                    square.classList.add(
+                        "target"
+                    );
+                }
+            }
+
+
+            const piece =
+                position[row][col];
+
+
+            if (piece) {
+
+                const span =
+                    document.createElement("span");
+
+
+                span.className =
+                    "piece " +
+                    (
+                        piece.color === "w"
+                            ? "whitePiece"
+                            : "blackPiece"
+                    );
+
+
+                span.textContent =
+                    piece.color === "w"
+                        ? "♙♘♗♖♕♔"
+                            [
+                                "pnbrqk"
+                                .indexOf(
+                                    piece.type
+                                )
+                            ]
+                        : "♟♞♝♜♛♚"
+                            [
+                                "pnbrqk"
+                                .indexOf(
+                                    piece.type
+                                )
+                            ];
+
+
+                square.appendChild(span);
+            }
+
+
+            square.onclick =
+                () =>
+                    clickSquare(squareName);
+
+
+            boardElement.appendChild(square);
+        }
+    }
+}
+
+
+/* =========================================================
+   PLAYER MOVE
+========================================================= */
+
+function clickSquare(square) {
+
+    if (gameOver)
+        return;
+
+    if (engineThinking)
+        return;
+
+    if (game.turn() !== "w")
+        return;
+
+
+    if (selected === null) {
+
+        const piece =
+            game.get(square);
+
+
+        if (
+            piece &&
+            piece.color === "w"
+        ) {
+
+            selected = square;
+
+            drawBoard();
+        }
+
+        return;
+    }
+
+
+    if (square === selected) {
+
+        selected = null;
+
+        drawBoard();
+
+        return;
+    }
+
+
+    const legalMoves =
+        game.moves({
+            square: selected,
+            verbose: true
+        });
+
+
+    const move =
+        legalMoves.find(
+            m => m.to === square
+        );
+
+
+    if (!move) {
+
+        const piece =
+            game.get(square);
+
+
+        if (
+            piece &&
+            piece.color === "w"
+        ) {
+
+            selected = square;
+
+        } else {
+
+            selected = null;
+        }
+
+
+        drawBoard();
+
+        return;
+    }
+
+
+    let promotion = "q";
+
+
+    const movingPiece =
+        game.get(selected);
+
+
+    if (
+        movingPiece &&
+        movingPiece.type === "p" &&
+        (
+            square[1] === "1" ||
+            square[1] === "8"
+        )
+    ) {
+
+        promotion =
+            prompt(
+                "Promote to q, r, b or n:",
+                "q"
+            );
+
+
+        if (
+            ![
+                "q",
+                "r",
+                "b",
+                "n"
+            ].includes(promotion)
+        ) {
+
+            promotion = "q";
+        }
+    }
+
+
+    const result =
+        game.move({
+
+            from: selected,
+            to: square,
+            promotion: promotion
+        });
+
+
+    if (!result)
+        return;
+
+
+    selected = null;
+
+
+    moveHistory.push(
+        result.san
+    );
+
+
+    updateMoveList();
+
+
+    /*
+        Start Black's clock.
+    */
+
+    lastClock =
+        performance.now();
+
+
+    drawBoard();
+
+
+    if (
+        checkGameEnd()
+    )
+        return;
+
+
+    statusElement.textContent =
+        "Stockfish thinking...";
+
+
+    startEngine();
+}
+
+
+/* =========================================================
+   ENGINE
+========================================================= */
+
+/*
+    IMPORTANT:
+    We fetch Stockfish's JS source first and create
+    the Worker from a Blob. This is why GitHub Pages
+    can host our interface while the engine files
+    remain externally hosted.
+*/
+
+async function loadEngine() {
+
+    try {
+
+        infoElement.textContent =
+            "Loading Stockfish 18...";
+
+
+        const response =
+            await fetch(
+                ENGINE_JS
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Could not download Stockfish JS. HTTP " +
+                response.status
+            );
+        }
+
+
+        let source =
+            await response.text();
+
+
+        /*
+            The Stockfish loader normally searches for
+            its .wasm file relative to itself.
+
+            Our Worker is a Blob, so relative paths
+            aren't useful.
+
+            Replace the WASM filename with its absolute
+            URL.
+        */
+
+        source =
+            source.replace(
+                /stockfish-18-lite-single\.wasm/g,
+                ENGINE_WASM
+            );
+
+
+        /*
+            Create a local Worker.
+        */
+
+        const blob =
+            new Blob(
+                [source],
+                {
+                    type:
+                        "application/javascript"
+                }
+            );
+
+
+        const workerURL =
+            URL.createObjectURL(
+                blob
+            );
+
+
+        engine =
+            new Worker(
+                workerURL
+            );
+
+
+        engine.onmessage =
+            handleEngineMessage;
+
+
+        engine.onerror =
+            function(error) {
+
+                console.error(
+                    "ENGINE ERROR",
+                    error
+                );
+
+
+                engineReady = false;
+                engineThinking = false;
+
+
+                statusElement.textContent =
+                    "Engine failed to load";
+
+
+                infoElement.textContent =
+                    "Refresh the page and try again.";
+            };
+
+
+        engine.postMessage(
+            "uci"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "ENGINE LOAD ERROR",
+            error
+        );
+
+
+        statusElement.textContent =
+            "Engine failed to load";
+
+
+        infoElement.textContent =
+            error.message;
+    }
+}
+
+
+/* =========================================================
+   ENGINE MESSAGE
+========================================================= */
+
+function handleEngineMessage(event) {
+
+    const line =
+        typeof event.data === "string"
+            ? event.data.trim()
+            : "";
+
+
+    if (line === "uciok") {
+
+        engine.postMessage(
+            "setoption name UCI_LimitStrength value true"
+        );
+
+
+        engine.postMessage(
+            "setoption name UCI_Elo value " +
+            engineElo
+        );
+
+
+        engine.postMessage(
+            "isready"
+        );
+
+
+        return;
+    }
+
+
+    if (line === "readyok") {
+
+        engineReady =
+            true;
+
+
+        infoElement.textContent =
+            "Stockfish 18 ready — " +
+            engineElo +
+            " Elo";
+
+
+        statusElement.textContent =
+            "Your turn";
+
+
+        return;
+    }
+
+
+    if (
+        line.startsWith("info")
+    ) {
+
+        showEngineInfo(
+            line
+        );
+
+
+        return;
+    }
+
+
+    if (
+        line.startsWith("bestmove")
+    ) {
+
+        const parts =
+            line.split(/\s+/);
+
+
+        const bestMove =
+            parts[1];
+
+
+        if (
+            bestMove &&
+            bestMove !== "(none)"
+        ) {
+
+            playEngineMove(
+                bestMove
+            );
+        }
+    }
+}
+
+
+/* =========================================================
+   ENGINE INFO
+========================================================= */
+
+function showEngineInfo(line) {
+
+    const depth =
+        line.match(
+            /\bdepth\s+(\d+)/
+        );
+
+    const score =
+        line.match(
+            /\bscore\s+(cp|mate)\s+(-?\d+)/
+        );
+
+    const nodes =
+        line.match(
+            /\bnodes\s+(\d+)/
+        );
+
+    const time =
+        line.match(
+            /\btime\s+(\d+)/
+        );
+
+
+    let output = "";
+
+
+    if (depth) {
+
+        output +=
+            "Depth: " +
+            depth[1];
+    }
+
+
+    if (score) {
+
+        output += " | ";
+
+
+        if (
+            score[1] === "mate"
+        ) {
+
+            output +=
+                "Mate: " +
+                score[2];
+
+        } else {
+
+            output +=
+                "Eval: " +
+                (
+                    Number(
+                        score[2]
+                    ) / 100
+                ).toFixed(2);
+        }
+    }
+
+
+    if (nodes) {
+
+        output +=
+            " | Nodes: " +
+            nodes[1];
+    }
+
+
+    if (time) {
+
+        output +=
+            " | Search: " +
+            (
+                Number(
+                    time[1]
+                ) / 1000
+            ).toFixed(1) +
+            "s";
+    }
+
+
+    if (output) {
+
+        infoElement.textContent =
+            output;
+    }
+}
+
+
+/* =========================================================
+   START ENGINE SEARCH
+========================================================= */
+
+function startEngine() {
+
+    if (
+        !engine ||
+        !engineReady ||
+        engineThinking ||
+        gameOver
+    )
+        return;
+
+
+    if (
+        game.turn() !== "b"
+    )
+        return;
+
+
+    engineThinking =
+        true;
+
+
+    statusElement.textContent =
+        "Stockfish thinking...";
+
+
+    /*
+        Send exact position.
+    */
+
+    engine.postMessage(
+        "position fen " +
+        game.fen()
+    );
+
+
+    /*
+        Adaptive 3–7 second search.
+    */
+
+    const searchTime =
+        chooseThinkingTime();
+
+
+    infoElement.textContent =
+        "Thinking for " +
+        (
+            searchTime / 1000
+        ).toFixed(1) +
+        " seconds...";
+
+
+    engine.postMessage(
+        "go movetime " +
+        searchTime
+    );
+}
+
+
+/* =========================================================
+   THINKING TIME
+========================================================= */
+
+function chooseThinkingTime() {
+
+    const legal =
+        game.moves({
+            verbose: true
+        });
+
+
+    let tactical = 0;
+
+
+    for (
+        const move of legal
+    ) {
+
+        if (move.captured)
+            tactical++;
+
+
+        if (
+            move.san &&
+            (
+                move.san.includes("+") ||
+                move.san.includes("#")
+            )
+        )
+            tactical++;
+
+
+        if (move.promotion)
+            tactical++;
+    }
+
+
+    let time = 3000;
+
+
+    if (tactical >= 2)
+        time += 1000;
+
+
+    if (tactical >= 4)
+        time += 1500;
+
+
+    if (game.in_check())
+        time += 1500;
+
+
+    if (legal.length <= 8)
+        time += 500;
+
+
+    return Math.min(
+        7000,
+        time
+    );
+}
+
+
+/* =========================================================
+   APPLY ENGINE MOVE
+========================================================= */
+
+function playEngineMove(uci) {
+
+    const from =
+        uci.substring(0, 2);
+
+    const to =
+        uci.substring(2, 4);
+
+    const promotion =
+        uci.length >= 5
+            ? uci[4]
+            : "q";
+
+
+    const result =
+        game.move({
+
+            from: from,
+            to: to,
+            promotion: promotion
+        });
+
+
+    if (!result) {
+
+        engineThinking = false;
+
+        statusElement.textContent =
+            "Engine move error.";
+
+        return;
+    }
+
+
+    moveHistory.push(
+        result.san
+    );
+
+
+    updateMoveList();
+
+
+    engineThinking =
+        false;
+
+
+    lastClock =
+        performance.now();
+
+
+    drawBoard();
+
+
+    if (
+        checkGameEnd()
+    )
+        return;
+
+
+    updateStatus();
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+function updateStatus() {
+
+    if (gameOver)
+        return;
+
+
+    if (game.in_check()) {
+
+        statusElement.textContent =
+            game.turn() === "w"
+                ? "You are in check!"
+                : "Stockfish is in check!";
+
+    } else {
+
+        statusElement.textContent =
+            game.turn() === "w"
+                ? "Your turn"
+                : "Stockfish thinking...";
+    }
+}
+
+
+/* =========================================================
+   GAME END
+========================================================= */
+
+function checkGameEnd() {
+
+    if (
+        !game.game_over()
+    )
+        return false;
+
+
+    gameOver = true;
+
+    engineThinking = false;
+
+
+    if (engine) {
+
+        try {
+            engine.postMessage(
+                "stop"
+            );
+        } catch (e) {}
+    }
+
+
+    if (
+        game.in_check()
+    ) {
+
+        statusElement.textContent =
+            game.turn() === "w"
+                ? "Checkmate! Stockfish wins!"
+                : "Checkmate! You win!";
+
+    } else {
+
+        statusElement.textContent =
+            "Draw!";
+    }
+
+
+    return true;
+}
+
+
+/* =========================================================
+   CLOCK
+========================================================= */
+
+function formatTime(ms) {
+
+    const totalSeconds =
+        Math.ceil(
+            ms / 1000
+        );
+
+
+    const minutes =
+        Math.floor(
+            totalSeconds / 60
+        );
+
+
+    const seconds =
+        totalSeconds % 60;
+
+
+    return (
+        String(minutes)
+            .padStart(2, "0") +
+        ":" +
+        String(seconds)
+            .padStart(2, "0")
+    );
+}
+
+
+function updateClock() {
+
+    if (gameOver)
+        return;
+
+
+    const now =
+        performance.now();
+
+
+    const elapsed =
+        now -
+        lastClock;
+
+
+    lastClock =
+        now;
+
+
+    if (
+        game.turn() === "w"
+    ) {
+
+        whiteTime -=
+            elapsed;
+
+    } else {
+
+        blackTime -=
+            elapsed;
+    }
+
+
+    whiteTime =
+        Math.max(
+            0,
+            whiteTime
+        );
+
+
+    blackTime =
+        Math.max(
+            0,
+            blackTime
+        );
+
+
+    whiteClockElement.textContent =
+        formatTime(
+            whiteTime
+        );
+
+
+    blackClockElement.textContent =
+        formatTime(
+            blackTime
+        );
+
+
+    if (
+        whiteTime <= 0
+    ) {
+
+        gameOver = true;
+
+        engineThinking = false;
+
+
+        if (engine) {
+
+            try {
+                engine.postMessage(
+                    "stop"
+                );
+            } catch (e) {}
+        }
+
+
+        statusElement.textContent =
+            "⏰ Time! Stockfish wins!";
+
+
+        return;
+    }
+
+
+    if (
+        blackTime <= 0
+    ) {
+
+        gameOver = true;
+
+        engineThinking = false;
+
+
+        if (engine) {
+
+            try {
+                engine.postMessage(
+                    "stop"
+                );
+            } catch (e) {}
+        }
+
+
+        statusElement.textContent =
+            "⏰ Time! You win!";
+    }
+}
+
+
+/* =========================================================
+   MOVES
+========================================================= */
+
+function updateMoveList() {
+
+    let text = "";
+
+
+    for (
+        let i = 0;
+        i < moveHistory.length;
+        i++
+    ) {
+
+        if (
+            i % 2 === 0
+        ) {
+
+            text +=
+                (
+                    Math.floor(i / 2) + 1
+                ) +
+                ". ";
+        }
+
+
+        text +=
+            moveHistory[i] +
+            " ";
+    }
+
+
+    movesElement.textContent =
+        text;
+}
+
+
+/* =========================================================
+   NEW GAME
+========================================================= */
+
+newGameButton.onclick =
+    function() {
+
+        if (engine) {
+
+            try {
+                engine.postMessage(
+                    "stop"
+                );
+            } catch (e) {}
+        }
+
+
+        game =
+            new Chess();
+
+
+        selected = null;
+
+        engineThinking = false;
+
+        gameOver = false;
+
+
+        whiteTime =
+            600000;
+
+        blackTime =
+            600000;
+
+
+        lastClock =
+            performance.now();
+
+
+        moveHistory =
+            [];
+
+
+        updateMoveList();
+        drawBoard();
+        updateStatus();
+
+
+        infoElement.textContent =
+            engineReady
+                ? "Stockfish ready"
+                : "Loading Stockfish...";
+    };
+
+
+/* =========================================================
+   STRENGTH
+========================================================= */
+
+strengthElement.oninput =
+    function() {
+
+        engineElo =
+            Number(
+                this.value
+            );
+
+
+        strengthLabel.textContent =
+            engineElo +
+            " Elo";
+
+
+        if (
+            engine &&
+            engineReady
+        ) {
+
+            engine.postMessage(
+                "setoption name UCI_LimitStrength value true"
+            );
+
+
+            engine.postMessage(
+                "setoption name UCI_Elo value " +
+                engineElo
+            );
+        }
+    };
+
+
+/* =========================================================
+   START
+========================================================= */
+
+drawBoard();
+
+updateStatus();
+
+updateClock();
+
+
+clockInterval =
+    setInterval(
+        updateClock,
+        50
+    );
+
+
+loadStockfish();
+
+</script>
+
+</body>
+</html>
